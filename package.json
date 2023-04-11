@@ -33,7 +33,6 @@
     "url": "git@github.com:YousefED/typescript-json-schema.git"
   },
   "license": "BSD-3-Clause",
-  "private": true,
   "keywords": [
     "typescript",
     "json",

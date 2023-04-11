@@ -1,3 +1,11 @@
+# Forked Package
+
+This forked package is to address the issue raised in [FCE-8167](https://kurtosys-prod-eng.atlassian.net/browse/FCE-8167)
+
+We did create an issue on the original repo [here](https://github.com/YousefED/typescript-json-schema/issues/533) but we are not sure when we will get a response on the issue.
+
+Studio Apps will use this fixed forked repo for the time being. To generate the schemas used by studio to give meaningful titles to the configuration properties.
+
 # typescript-json-schema
 
 [![npm version](https://img.shields.io/npm/v/typescript-json-schema.svg)](https://www.npmjs.com/package/typescript-json-schema) ![Test](https://github.com/YousefED/typescript-json-schema/workflows/Test/badge.svg)
@@ -6,22 +14,22 @@ Generate json-schemas from your Typescript sources.
 
 ## Features
 
-- Compiles your Typescript program to get complete type information.
-- Translates required properties, extends, annotation keywords, property initializers as defaults. You can find examples for these features in the [api doc](https://github.com/YousefED/typescript-json-schema/tree/master/api.md) or the [test examples](https://github.com/YousefED/typescript-json-schema/tree/master/test/programs).
+-   Compiles your Typescript program to get complete type information.
+-   Translates required properties, extends, annotation keywords, property initializers as defaults. You can find examples for these features in the [api doc](https://github.com/YousefED/typescript-json-schema/tree/master/api.md) or the [test examples](https://github.com/YousefED/typescript-json-schema/tree/master/test/programs).
 
 ## Usage
 
 ### Command line
 
-- Install with `npm install typescript-json-schema -g`
-- Generate schema from a typescript type: `typescript-json-schema project/directory/tsconfig.json TYPE`
+-   Install with `npm install typescript-json-schema -g`
+-   Generate schema from a typescript type: `typescript-json-schema project/directory/tsconfig.json TYPE`
 
 To generate files for only _some_ types in `tsconfig.json` specify
 filenames or globs with the `--include` option. This is especially useful for large projects.
 
 In case no `tsconfig.json` is available for your project, you can directly specify the .ts files (this in this case we use some built-in compiler presets):
 
-- Generate schema from a typescript type: `typescript-json-schema "project/directory/**/*.ts" TYPE`
+-   Generate schema from a typescript type: `typescript-json-schema "project/directory/**/*.ts" TYPE`
 
 The `TYPE` can either be a single, fully qualified type or `"*"` to generate the schema for all types.
 
@@ -73,11 +81,7 @@ const compilerOptions: TJS.CompilerOptions = {
 // optionally pass a base path
 const basePath = "./my-dir";
 
-const program = TJS.getProgramFromFiles(
-  [resolve("my-file.ts")],
-  compilerOptions,
-  basePath
-);
+const program = TJS.getProgramFromFiles([resolve("my-file.ts")], compilerOptions, basePath);
 
 // We can either get the schema for one file and one type...
 const schema = TJS.generateSchema(program, "MyType", settings);
@@ -272,11 +276,13 @@ export interface UserData {
 file `example.ts`
 
 ```ts
-export const example: InnerData[] = [{
-  age: 30,
-  name: "Ben",
-  free: false
-}]
+export const example: InnerData[] = [
+    {
+        age: 30,
+        name: "Ben",
+        free: false,
+    },
+];
 ```
 
 Translation:
