@@ -1,5 +1,5 @@
 {
-  "name": "typescript-json-schema",
+  "name": "@kurtosys/typescript-json-schema",
   "version": "0.56.0",
   "description": "typescript-json-schema generates JSON Schema files from your Typescript sources",
   "main": "dist/typescript-json-schema.js",
@@ -33,6 +33,7 @@
     "url": "git@github.com:YousefED/typescript-json-schema.git"
   },
   "license": "BSD-3-Clause",
+  "private": true,
   "keywords": [
     "typescript",
     "json",
