@@ -13,11 +13,10 @@
     ],
     "definitions": {
         "Circle": {
+            "additionalProperties": false,
             "properties": {
                 "kind": {
-                    "enum": [
-                        "circle"
-                    ],
+                    "const": "circle",
                     "type": "string"
                 },
                 "radius": {
@@ -31,14 +30,13 @@
             "type": "object"
         },
         "Rectangle": {
+            "additionalProperties": false,
             "properties": {
                 "height": {
                     "type": "number"
                 },
                 "kind": {
-                    "enum": [
-                        "rectangle"
-                    ],
+                    "const": "rectangle",
                     "type": "string"
                 },
                 "width": {
@@ -53,11 +51,10 @@
             "type": "object"
         },
         "Square": {
+            "additionalProperties": false,
             "properties": {
                 "kind": {
-                    "enum": [
-                        "square"
-                    ],
+                    "const": "square",
                     "type": "string"
                 },
                 "size": {

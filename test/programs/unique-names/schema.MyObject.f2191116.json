@@ -1,11 +1,10 @@
 {
     "type": "object",
+    "additionalProperties": false,
     "properties": {
         "is": {
             "type": "string",
-            "enum": [
-                "MyObject_1"
-            ]
+            "const": "MyObject_1"
         }
     },
     "required": [

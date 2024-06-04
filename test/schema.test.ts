@@ -44,6 +44,9 @@ export function assertSchema(
         if (!("required" in settings)) {
             settings.required = true;
         }
+        if (!("noExtraProps" in settings)) {
+            settings.noExtraProps = true;
+        }
 
         const files = [resolve(BASE + group + "/main.ts")];
         const actual = TJS.generateSchema(TJS.getProgramFromFiles(files, compilerOptions), type, settings, files);
@@ -59,7 +62,6 @@ export function assertSchema(
         // test against the meta schema
         if (actual !== null) {
             ajv.validateSchema(actual);
-
             assert.equal(ajv.errors, null, "The schema is not valid");
 
             // Compiling the schema can reveal warnings that validateSchema doesn't.
@@ -81,6 +83,10 @@ export function assertSchemas(
     it(group + " should create correct schema", () => {
         if (!("required" in settings)) {
             settings.required = true;
+        }
+
+        if (!("noExtraProps" in settings)) {
+            settings.noExtraProps = true;
         }
 
         const generator = TJS.buildGenerator(
@@ -113,7 +119,8 @@ export function assertRejection(
     group: string,
     type: string,
     settings: TJS.PartialArgs = {},
-    compilerOptions?: TJS.CompilerOptions
+    compilerOptions?: TJS.CompilerOptions,
+    errType?: RegExp | ErrorConstructor,
 ) {
     it(group + " should reject input", () => {
         let schema = null;
@@ -122,9 +129,13 @@ export function assertRejection(
                 settings.required = true;
             }
 
+            if (!("noExtraProps" in settings)) {
+                settings.noExtraProps = true;
+            }
+
             const files = [resolve(BASE + group + "/main.ts")];
             schema = TJS.generateSchema(TJS.getProgramFromFiles(files, compilerOptions), type, settings, files);
-        });
+        }, errType || /.*/);
         assert.equal(schema, null, "Expected no schema to be generated");
     });
 }
@@ -156,6 +167,52 @@ describe("interfaces", () => {
 
             assert.deepEqual(schema.definitions!["MySubObject"], schemaOverride);
         }
+    });
+    it("should output the schemas set by setSchemaOverride with getSchemaForSymbol", () => {
+        const program = TJS.getProgramFromFiles([resolve(BASE + "interface-multi/main.ts")]);
+        const generator = TJS.buildGenerator(program);
+        assert(generator !== null);
+
+        const schemaOverride1: TJS.Definition = { type: "string" };
+        const schemaOverride2: TJS.Definition = { type: "integer" };
+
+        generator?.setSchemaOverride("MySubObject", schemaOverride1);
+        generator?.setSchemaOverride("MySubObject2", schemaOverride2);
+        const schema = generator?.getSchemaForSymbol("MySubObject");
+
+        // Should not change original schema object.
+        assert.deepEqual(schemaOverride1,  { type: "string" });
+        assert.deepEqual(schemaOverride2,  { type: "integer" });
+
+        assert.deepEqual(schema, { ...schemaOverride1, $schema: "http://json-schema.org/draft-07/schema#" });
+    });
+    it("should output the schemas set by setSchemaOverride with getSchemaForSymbol and other overrides", () => {
+        const program = TJS.getProgramFromFiles([resolve(BASE + "interface-multi/main.ts")]);
+        const generator = TJS.buildGenerator(program);
+        assert(generator !== null);
+        const schemaOverride1: TJS.Definition = { type: "string" };
+        const schemaOverride2: TJS.Definition = { type: "integer" };
+
+        generator?.setSchemaOverride("MySubObject1", schemaOverride1);
+        generator?.setSchemaOverride("MySubObject2", schemaOverride2);
+        const schema = generator?.getSchemaForSymbol("MySubObject1", true, true);
+
+        // Should not change original schema object.
+        assert.deepEqual(schemaOverride1,  { type: "string" });
+        assert.deepEqual(schemaOverride2,  { type: "integer" });
+
+        assert.deepEqual(schema, {
+            ...schemaOverride1,
+            $schema: "http://json-schema.org/draft-07/schema#",
+            definitions: {
+                MySubObject1: {
+                    type: "string"
+                },
+                MySubObject2: {
+                    type: "integer"
+                }
+            }
+        });
     });
     it("should ignore type aliases that have schema overrides", () => {
         const program = TJS.getProgramFromFiles([resolve(BASE + "type-alias-schema-override/main.ts")]);
@@ -221,6 +278,7 @@ describe("schema", () => {
         //     useTypeAliasRef: true,
         //     useRootRef: true
         // });
+        assertSchema("type-literals", "MyObject");
         assertSchema("type-no-aliases-recursive-topref", "MyAlias", {
             aliasRef: false,
             topRef: true,
@@ -241,6 +299,7 @@ describe("schema", () => {
         */
         assertSchema("type-aliases-tuple-of-variable-length", "MyTuple");
         assertSchema("type-aliases-tuple-with-rest-element", "MyTuple");
+        assertRejection("type-alias-never", "MyNever", {}, {}, /Unsupported type: never/);
     });
 
     describe("enums", () => {
@@ -261,6 +320,18 @@ describe("schema", () => {
         assertSchema("type-aliases-union-namespace", "MyModel");
         assertSchema("type-intersection-recursive", "Foo");
         assertSchema("type-intersection-recursive-no-additional", "MyLinkedList", {
+            noExtraProps: true,
+        });
+        assertSchema("type-union-strict-null-keep-description", "MyObject", undefined, {
+            strictNullChecks: true,
+        });
+    });
+
+    describe("no-refs", () => {
+        assertSchema("no-ref", "MyModule", {
+            ref: false,
+            aliasRef: false,
+            topRef: false,
             noExtraProps: true,
         });
     });
@@ -300,6 +371,7 @@ describe("schema", () => {
 
     describe("comments", () => {
         assertSchema("comments", "MyObject");
+        assertSchema("comments-comment", "MyObject");
         assertSchema("comments-override", "MyObject");
         assertSchema("comments-imports", "MyObject", {
             aliasRef: true,
@@ -354,11 +426,16 @@ describe("schema", () => {
         assertSchema("array-empty", "MyEmptyArray");
         assertSchema("map-types", "MyObject");
         assertSchema("extra-properties", "MyObject");
+        assertSchema("numeric-keys-and-others", "NumericKeysAndOthers");
     });
 
     describe("string literals", () => {
         assertSchema("string-literals", "MyObject");
         assertSchema("string-literals-inline", "MyObject");
+    });
+
+    describe("template string", () => {
+        assertSchema("string-template-literal", "MyObject");
     });
 
     describe("custom dates", () => {
@@ -393,6 +470,13 @@ describe("schema", () => {
         });
     });
 
+    describe("undefined", () => {
+        assertSchema("undefined-property", "MyObject");
+
+        // Creating a schema for main type = undefined should fail
+        assertRejection("type-alias-undefined", "MyUndefined", undefined, undefined, /Not supported: root type undefined/);
+    });
+
     describe("other", () => {
         assertSchema("array-and-description", "MyObject");
 
@@ -424,6 +508,8 @@ describe("schema", () => {
         });
 
         assertSchema("prop-override", "MyObject");
+
+        assertSchema("symbol", "MyObject");
     });
 
     describe("object index", () => {
@@ -442,6 +528,7 @@ describe("schema", () => {
     describe("key in key of", () => {
         assertSchema("key-in-key-of-single", "Main");
         assertSchema("key-in-key-of-multi", "Main");
+        assertSchema("key-in-key-of-multi-underscores", "Main");
     });
 });
 
@@ -479,23 +566,68 @@ describe("Functionality 'required' in annotation", () => {
 });
 
 describe("when reusing a generator", () => {
-  it("should not add unrelated definitions to schemas", () => {
-    // regression test for https://github.com/YousefED/typescript-json-schema/issues/465
-    const testProgramPath = BASE + "no-unrelated-definitions/";
-    const program = TJS.programFromConfig(resolve(testProgramPath + "tsconfig.json"));
-    const generator = TJS.buildGenerator(program);
+    it("should not add unrelated definitions to schemas", () => {
+        // regression test for https://github.com/YousefED/typescript-json-schema/issues/465
+        const testProgramPath = BASE + "no-unrelated-definitions/";
+        const program = TJS.programFromConfig(resolve(testProgramPath + "tsconfig.json"));
+        const generator = TJS.buildGenerator(program);
 
-    ["MyObject", "MyOtherObject"].forEach(symbolName => {
-      const expectedSchemaString = readFileSync(testProgramPath + `schema.${symbolName}.json`, "utf8");
-      const expectedSchemaObject = JSON.parse(expectedSchemaString);
+        ["MyObject", "MyOtherObject"].forEach(symbolName => {
+            const expectedSchemaString = readFileSync(testProgramPath + `schema.${symbolName}.json`, "utf8");
+            const expectedSchemaObject = JSON.parse(expectedSchemaString);
 
-      const actualSchemaObject = generator?.getSchemaForSymbol(symbolName);
+            const actualSchemaObject = generator?.getSchemaForSymbol(symbolName);
 
-      assert.deepEqual(actualSchemaObject, expectedSchemaObject, `The schema for ${symbolName} is not as expected`);
+            assert.deepEqual(actualSchemaObject, expectedSchemaObject, `The schema for ${symbolName} is not as expected`);
+        });
     });
-  });
+
+    it("should not add unrelated schemaOverrides to schemas", () => {
+        const testProgramPath = BASE + "no-unrelated-definitions/";
+        const program = TJS.programFromConfig(resolve(testProgramPath + "tsconfig.json"));
+        const generator = TJS.buildGenerator(program);
+
+        const schemaOverride: TJS.Definition = { type: "string" };
+        generator?.setSchemaOverride("SomeOtherDefinition", schemaOverride);
+
+        [
+            { symbolName: "MyObject", schemaName: "MyObject" },
+            { symbolName: "MyOtherObject", schemaName: "MyOtherObjectWithOverride" },
+        ].forEach(({ symbolName, schemaName }) => {
+            const expectedSchemaString = readFileSync(`${testProgramPath}schema.${schemaName}.json`, "utf8");
+            const expectedSchemaObject = JSON.parse(expectedSchemaString);
+
+            const actualSchemaObject = generator?.getSchemaForSymbol(symbolName);
+
+            assert.deepEqual(actualSchemaObject, expectedSchemaObject, `The schema for ${symbolName} is not as expected`);
+        });
+    });
+
+    it("should include all schemaOverrides when generating program schemas", () => {
+        const testProgramPath = BASE + "no-unrelated-definitions/";
+        const program = TJS.programFromConfig(resolve(`${testProgramPath}tsconfig.json`));
+        const generator = TJS.buildGenerator(program)!;
+
+        const schemaOverride: TJS.Definition = { type: "string" };
+        generator.setSchemaOverride("UnrelatedDefinition", schemaOverride);
+
+        const expectedSchemaString = readFileSync(`${testProgramPath}schema.program.json`, "utf8");
+        const expectedSchemaObject = JSON.parse(expectedSchemaString);
+
+        const actualSchemaObject = TJS.generateSchema(program, "*", {}, undefined, generator);
+
+        assert.deepEqual(actualSchemaObject, expectedSchemaObject, `The schema for whole program is not as expected`);
+    });
 });
 
 describe("satisfies keyword - ignore from a \"satisfies\" and build by rally type", () => {
     assertSchema("satisfies-keyword", "Specific");
+});
+
+describe("const keyword", () => {
+    assertSchema("const-keyword", "Object");
+});
+
+describe("constAsEnum option", () => {
+    assertSchema("const-as-enum", "MyObject", { constAsEnum: true });
 });

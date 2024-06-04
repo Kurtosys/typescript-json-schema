@@ -1,13 +1,14 @@
 {
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "additionalProperties": false,
     "definitions": {
         "Enum": {
             "enum": [
                 0,
                 1,
-                null,
+                true,
                 "str",
-                true
+                null
             ],
             "type": [
                 "number",

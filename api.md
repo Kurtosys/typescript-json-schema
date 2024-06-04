@@ -230,13 +230,20 @@ interface MySubObject {
     a: boolean;
 }
 
+interface AnotherSubObject {
+    b: boolean;
+}
+
 interface MyObject {
     /**
      * @title empty#
      */
     empty;
-
+    /**
+     * @title filled
+     */
     filled: MySubObject;
+    nonTitled: AnotherSubObject;
 }
 ```
 
@@ -485,6 +492,21 @@ interface MyObject {
 ```
 
 
+## [comments-comment](./test/programs/comments-comment)
+
+```ts
+/**
+ * @$comment Object comment
+ */
+interface MyObject {
+  /**
+   * @$comment Property comment
+   */
+  text: string;
+}
+```
+
+
 ## [comments-from-lib](./test/programs/comments-from-lib)
 
 ```ts
@@ -597,6 +619,25 @@ export interface MyObject {
      */
     date: Date;
 }
+```
+
+
+## [const-as-enum](./test/programs/const-as-enum)
+
+```ts
+export interface MyObject {
+    reference: true;
+}
+```
+
+
+## [const-keyword](./test/programs/const-keyword)
+
+```ts
+const fn = <const T>(value: T) =>
+  ({ value });
+
+export type Object = ReturnType<typeof fn<"value">>;
 ```
 
 
@@ -1054,6 +1095,29 @@ export type Main = {
 ```
 
 
+## [key-in-key-of-multi-underscores](./test/programs/key-in-key-of-multi-underscores)
+
+```ts
+type Util = {
+    __2Underscores: {
+        utilDeepKey2: string;
+    };
+    ___3Underscores: {
+        utilDeepKey3: string;
+    };
+    ____4Underscores: {
+        utilDeepKey4: string;
+    };
+};
+
+export type Main = {
+    [Key in keyof Util]: {
+        [key: string]: Util[Key];
+    };
+};
+```
+
+
 ## [key-in-key-of-single](./test/programs/key-in-key-of-single)
 
 ```ts
@@ -1209,6 +1273,21 @@ export interface Never {
 ```
 
 
+## [no-ref](./test/programs/no-ref)
+
+```ts
+type MySubType = {
+    id: string;
+};
+
+export type MyModule = {
+    address: MySubType & { extraProp: number };
+    address2: MySubType;
+    address3: MySubType;
+};
+```
+
+
 ## [no-unrelated-definitions](./test/programs/no-unrelated-definitions)
 
 ```ts
@@ -1226,6 +1305,17 @@ export interface MyOtherObject {
 
 interface SomeOtherDefinition {
   is: string;
+}
+```
+
+
+## [numeric-keys-and-others](./test/programs/numeric-keys-and-others)
+
+```ts
+interface NumericKeysAndOthers {
+    [key: number]: number;
+    a: string;
+    b: boolean;
 }
 ```
 
@@ -1379,6 +1469,33 @@ class MyObject {
 ```
 
 
+## [string-template-literal](./test/programs/string-template-literal)
+
+```ts
+interface MyObject {
+  a: `@${string}`,
+  b: `@${number}`,
+  c: `@${bigint}`,
+  d: `@${boolean}`,
+  e: `@${undefined}`,
+  f: `@${null}`,
+  g: `${string}@`,
+  h: `${number}@`,
+  i: `${string}@${number}`,
+  j: `${string}.${string}`,
+}
+```
+
+
+## [symbol](./test/programs/symbol)
+
+```ts
+export type MyObject = {
+    a: symbol;
+};
+```
+
+
 ## [tsconfig](./test/programs/tsconfig)
 
 ```ts
@@ -1409,6 +1526,13 @@ export interface IncludedAlways {
 export interface IncludedOnlyByTsConfig {
     a: string;
 };
+```
+
+
+## [type-alias-never](./test/programs/type-alias-never)
+
+```ts
+export type MyNever = never;
 ```
 
 
@@ -1456,6 +1580,13 @@ type MyString = string;
  * @maxLength 24
  */
 type MyString = string;
+```
+
+
+## [type-alias-undefined](./test/programs/type-alias-undefined)
+
+```ts
+export type MyUndefined = undefined;
 ```
 
 
@@ -1823,7 +1954,7 @@ interface ChildFoo {
 }
 
 interface Foo {
-    readonly childFoos: Foo & ChildFoo;
+    readonly childFoos: Foo | ChildFoo;
 }
 ```
 
@@ -1840,6 +1971,20 @@ type MyNode = {
 } & MyRecursiveNode;
 
 type MyLinkedList = MyNode;
+```
+
+
+## [type-literals](./test/programs/type-literals)
+
+```ts
+type MyObject = {
+    param1: "1" | "2" | "3";
+    param2: "1" | "2" | 3 | true;
+    /** @enum {string} */
+    param3: "1" | "2" | "3";
+    /** @enum {unknown} */
+    param4: "1" | "2" | 3 | true;
+};
 ```
 
 
@@ -1968,6 +2113,34 @@ interface MyObject {
 ```
 
 
+## [type-union-strict-null-keep-description](./test/programs/type-union-strict-null-keep-description)
+
+```ts
+/**
+ * Description of InnerObject.
+ */
+type InnerObject = {
+	/**
+	 * Description of foo.
+	 */
+	foo: string;
+};
+
+/**
+ * Description of MyObject.
+ */
+type MyObject = {
+
+	inner1?: InnerObject;
+
+	/**
+	 * Override description.
+	 */
+	inner2?: InnerObject;
+};
+```
+
+
 ## [type-union-tagged](./test/programs/type-union-tagged)
 
 ```ts
@@ -1998,6 +2171,16 @@ type Shape = Square | Rectangle | Circle;
 interface MyObject {
   foo: () => string;
 }
+```
+
+
+## [undefined-property](./test/programs/undefined-property)
+
+```ts
+export type MyObject = {
+    a: string;
+    b: undefined;
+};
 ```
 
 
